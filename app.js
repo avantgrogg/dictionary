@@ -5,6 +5,12 @@ let mount = require('koa-mount');
 let api = require('./api/api.js');
 let logger = require('koa-logger');
 let limit = require('koa-better-ratelimit');
+let compress = require('koa-compress');
+let opts =  { 
+    filter: function (content_type) { return /text/i.test(content_type) }, // filter requests to be compressed using regex 
+    threshold: 2048, //minimum size to compress
+    flush: require('zlib').Z_SYNC_FLUSH };
+            }
  
 let APIv1 = new router();
 APIv1.get('/all', api.all);
@@ -25,6 +31,7 @@ app.use(function *(next){
 app.use(limit({ duration: 1000*60*3 , // 3 min
                 max: 10, blacklist: []}));
 app.use(logger());
+app.use(compress(opts));
  
  
 app.use(mount('/v1', APIv1.middleware()));
